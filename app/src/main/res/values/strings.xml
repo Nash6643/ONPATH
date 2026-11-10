@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PATHVISION AI</string>
+    <string name="nav_default_instruction">Locating ground plane and loading local Istanbul graph...</string>
+</resources>
