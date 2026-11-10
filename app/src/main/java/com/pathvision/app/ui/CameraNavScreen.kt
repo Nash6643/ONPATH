@@ -10,15 +10,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.pathvision.app.ui.viewmodel.NavUiState
+import com.pathvision.app.ar.ARCameraView
+import com.pathvision.app.perception.ObstacleDetector
 import com.pathvision.app.ui.viewmodel.NavViewModel
+import com.google.ar.core.Session
 
 @Composable
-fun CameraNavScreen(viewModel: NavViewModel) {
+fun CameraNavScreen(viewModel: NavViewModel, arSession: Session?, obstacleDetector: ObstacleDetector) {
     val uiState by viewModel.uiState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        // TODO: Insert ARCore / CameraX surface preview container here
+        // Live ARCore Camera Feed & Ground Anchor Surface
+        ARCameraView(
+            modifier = Modifier.fillMaxSize(),
+            arSession = arSession,
+            obstacleDetector = obstacleDetector,
+            onObstaclesDetected = { obstacles ->
+                viewModel.onObstaclesDetected(obstacles)
+                null
+            }
+        )
 
         // Top Navigation Status Bar
         Column(
