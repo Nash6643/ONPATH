@@ -11,11 +11,11 @@ import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import com.google.ar.core.Config
 import com.google.ar.core.Session
-import com.google.ar.core.exceptions.UnavailableApkTooOldException
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
-import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
+import com.pathvision.app.perception.ObstacleDetector
 import com.pathvision.app.ui.CameraNavScreen
+import com.pathvision.app.ui.theme.PathVisionTheme
 import com.pathvision.app.ui.viewmodel.NavViewModel
 
 class MainActivity : ComponentActivity() {
@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
     private val navViewModel: NavViewModel by viewModels()
     private var arSession: Session? = null
     private var arSessionInitialized = false
+    private lateinit var obstacleDetector: ObstacleDetector
 
     private val cameraPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -38,8 +39,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Initialize on-device TFLite obstacle detector
+        obstacleDetector = ObstacleDetector(this)
+
         setContent {
-            CameraNavScreen(viewModel = navViewModel)
+            PathVisionTheme {
+                CameraNavScreen(
+                    viewModel = navViewModel,
+                    arSession = arSession,
+                    obstacleDetector = obstacleDetector
+                )
+            }
         }
 
         checkCameraPermissionAndStart()
@@ -59,16 +69,8 @@ class MainActivity : ComponentActivity() {
     private fun initializeArSession() {
         try {
             if (arSession == null) {
-                when (Session.checkInstallStatus(this)) {
-                    Session.InstallStatus.INSTALL_REQUESTED -> {
-                        // ARCore not installed, request installation if needed
-                    }
-                    Session.InstallStatus.INSTALLED -> {}
-                }
-
                 arSession = Session(this).apply {
                     val arConfig = Config(this).apply {
-                        // Enable Depth API for obstacle reasoning and ground plane occlusion
                         depthMode = Config.DepthMode.AUTOMATIC
                         updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                         focusMode = Config.FocusMode.AUTO
